@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en" data-theme="kali">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; worker-src 'self' blob:; connect-src 'self' ws://localhost:* http://localhost:*;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KaliCode</title>
+  </head>
+  <body>
+    <div id="app" class="app">
+      <header id="titlebar" class="titlebar">
+        <div class="titlebar-brand no-drag" id="brand" title="KaliCode">
+          <img src="./assets/logo.svg" alt="" class="brand-logo" />
+          <span class="brand-name">KaliCode</span>
+        </div>
+
+        <nav class="menubar no-drag" id="menubar" aria-label="Application menu">
+          <button data-menu="file">File</button>
+          <button data-menu="edit">Edit</button>
+          <button data-menu="selection">Selection</button>
+          <button data-menu="view">View</button>
+          <button data-menu="go">Go</button>
+          <button data-menu="run">Run</button>
+          <button data-menu="terminal">Terminal</button>
+          <button data-menu="help">Help</button>
+        </nav>
+
+        <button class="command-center no-drag" id="command-center" title="Search files and commands">
+          <i class="codicon codicon-search"></i>
+          <span id="command-center-label">Search files and commands</span>
+          <kbd>Ctrl P</kbd>
+        </button>
+
+        <div class="window-controls no-drag">
+          <button id="win-min" title="Minimize" aria-label="Minimize">
+            <i class="codicon codicon-chrome-minimize"></i>
+          </button>
+          <button id="win-max" title="Maximize" aria-label="Maximize">
+            <i class="codicon codicon-chrome-maximize"></i>
+          </button>
+          <button id="win-close" title="Close" aria-label="Close" class="win-close">
+            <i class="codicon codicon-chrome-close"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="workbench">
+        <aside class="activitybar" aria-label="Activity bar">
+          <div class="activity-top">
+            <button class="activity-item active" id="activity-explorer" data-view="explorer" title="Explorer (Ctrl+Shift+E)">
+              <i class="codicon codicon-files"></i>
+              <span class="activity-indicator"></span>
+            </button>
+            <button class="activity-item" id="activity-search" data-view="search" title="Search (Ctrl+Shift+F)">
+              <i class="codicon codicon-search"></i>
+              <span class="activity-indicator"></span>
+            </button>
+            <button class="activity-item" id="activity-git" data-view="git" title="Source Control (Ctrl+Shift+G)">
+              <i class="codicon codicon-source-control"></i>
+              <span class="activity-indicator"></span>
+              <span class="activity-badge" id="git-badge" hidden>0</span>
+            </button>
+            <button class="activity-item" id="activity-run" data-view="run" title="Run and Debug (Ctrl+Shift+D)">
+              <i class="codicon codicon-run"></i>
+              <span class="activity-indicator"></span>
+            </button>
+            <button class="activity-item" id="activity-extensions" data-view="extensions" title="Extensions (Ctrl+Shift+X)">
+              <i class="codicon codicon-extensions"></i>
+              <span class="activity-indicator"></span>
+            </button>
+          </div>
+          <div class="activity-bottom">
+            <button class="activity-item" id="activity-theme" title="Change color theme">
+              <i class="codicon codicon-color-mode"></i>
+            </button>
+            <button class="activity-item" id="activity-settings" title="Settings (Ctrl+,)">
+              <i class="codicon codicon-settings-gear"></i>
+            </button>
+          </div>
+        </aside>
+
+        <aside class="sidebar" id="sidebar">
+          <section class="sidebar-panel active" id="panel-explorer" data-panel="explorer">
+            <div class="panel-heading">
+              <span>Explorer</span>
+              <div class="panel-heading-actions">
+                <button id="explorer-new-file" title="New File"><i class="codicon codicon-new-file"></i></button>
+                <button id="explorer-new-folder" title="New Folder"><i class="codicon codicon-new-folder"></i></button>
+                <button id="explorer-refresh" title="Refresh Explorer"><i class="codicon codicon-refresh"></i></button>
+                <button id="explorer-collapse" title="Collapse Folders"><i class="codicon codicon-collapse-all"></i></button>
+              </div>
+            </div>
+            <div class="workspace-row" id="workspace-row">
+              <button class="workspace-toggle" id="workspace-toggle" aria-label="Collapse workspace">
+                <i class="codicon codicon-chevron-down"></i>
+              </button>
+              <span class="workspace-name" id="workspace-name">NO FOLDER OPEN</span>
+              <div class="workspace-actions">
+                <button id="workspace-open" title="Open Folder"><i class="codicon codicon-folder-opened"></i></button>
+                <button id="workspace-close" title="Close Folder" hidden><i class="codicon codicon-close"></i></button>
+              </div>
+            </div>
+            <div class="tree" id="tree" tabindex="0"></div>
+            <div class="empty-state" id="explorer-empty">
+              <i class="codicon codicon-folder-opened empty-icon"></i>
+              <p>No folder is open.</p>
+              <button class="btn btn-primary btn-sm" id="explorer-open-folder">Open Folder</button>
+              <span class="muted small">or press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>O</kbd></span>
+            </div>
+          </section>
+
+          <section class="sidebar-panel" id="panel-search" data-panel="search">
+            <div class="panel-heading">
+              <span>Search</span>
+              <div class="panel-heading-actions">
+                <button id="search-refresh" title="Refresh Search"><i class="codicon codicon-refresh"></i></button>
+                <button id="search-clear" title="Clear Search"><i class="codicon codicon-clear-all"></i></button>
+              </div>
+            </div>
+            <div class="search-form">
+              <div class="search-row">
+                <span class="search-chevron"><i class="codicon codicon-chevron-right"></i></span>
+                <input id="search-input" type="text" placeholder="Search" spellcheck="false" autocomplete="off" />
+                <div class="search-flags">
+                  <button id="search-case" title="Match Case" aria-pressed="false">Aa</button>
+                  <button id="search-word" title="Match Whole Word" aria-pressed="false">ab</button>
+                  <button id="search-regex" title="Use Regular Expression" aria-pressed="false">.*</button>
+                </div>
+              </div>
+              <div class="search-row replace-row">
+                <span class="search-chevron"><i class="codicon codicon-replace"></i></span>
+                <input id="replace-input" type="text" placeholder="Replace" spellcheck="false" autocomplete="off" />
+                <button class="btn btn-sm" id="btn-replace-all" disabled>Replace All</button>
+              </div>
+              <div class="search-summary" id="search-summary"></div>
+            </div>
+            <div class="search-results" id="search-results">
+              <div class="empty-state compact">
+                <i class="codicon codicon-search empty-icon"></i>
+                <p>Search across your workspace.</p>
+                <span class="muted small">Use the toggles for case, whole word, and regex.</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="sidebar-panel" id="panel-git" data-panel="git">
+            <div class="panel-heading">
+              <span>Source Control</span>
+              <div class="panel-heading-actions">
+                <button id="git-refresh" title="Refresh Source Control"><i class="codicon codicon-refresh"></i></button>
+                <button id="git-more" title="More Actions"><i class="codicon codicon-ellipsis"></i></button>
+              </div>
+            </div>
+            <div class="git-content" id="git-content">
+              <div class="git-branch-row">
+                <button class="git-branch-button" id="git-branch-button" title="Switch branch">
+                  <i class="codicon codicon-git-branch"></i>
+                  <span id="git-branch-name">—</span>
+                  <i class="codicon codicon-chevron-down"></i>
+                </button>
+                <span class="git-sync" id="git-sync"></span>
+              </div>
+              <textarea id="git-message" placeholder="Message (Ctrl+Enter to commit)" rows="2" spellcheck="false"></textarea>
+              <button class="btn btn-primary git-commit-btn" id="git-commit" disabled>
+                <i class="codicon codicon-check"></i> Commit
+              </button>
+              <div class="git-changes" id="git-changes"></div>
+            </div>
+            <div class="empty-state" id="git-empty">
+              <i class="codicon codicon-source-control empty-icon"></i>
+              <p id="git-empty-text">No folder is open.</p>
+              <button class="btn btn-primary btn-sm" id="git-init" hidden>Initialize Repository</button>
+            </div>
+          </section>
+
+          <section class="sidebar-panel" id="panel-run" data-panel="run">
+            <div class="panel-heading">
+              <span>Run and Debug</span>
+              <div class="panel-heading-actions">
+                <button id="run-refresh" title="Refresh Run"><i class="codicon codicon-refresh"></i></button>
+              </div>
+            </div>
+            <div class="run-content" id="run-content">
+              <div class="run-card">
+                <div class="run-card-title"><i class="codicon codicon-play"></i> Active File</div>
+                <div class="run-file-name" id="run-active-file">No file open</div>
+                <div class="run-command" id="run-command-preview">Open a source file to create a run command.</div>
+                <div class="run-actions">
+                  <button class="btn btn-primary" id="btn-run"><i class="codicon codicon-play"></i> Run</button>
+                  <button class="btn" id="btn-run-terminal"><i class="codicon codicon-terminal"></i> Run in Terminal</button>
+                </div>
+              </div>
+              <div class="run-section-title">Workspace Tasks</div>
+              <div class="run-tasks" id="run-tasks">
+                <div class="muted small">Open a workspace to detect tasks.</div>
+              </div>
+            </div>
+            <div class="empty-state" id="run-empty">
+              <i class="codicon codicon-run empty-icon"></i>
+              <p>Run and debug your code.</p>
+              <span class="muted small">Press <kbd>F5</kbd> to run the active file.</span>
+            </div>
+          </section>
+
+          <section class="sidebar-panel" id="panel-extensions" data-panel="extensions">
+            <div class="panel-heading">
+              <span>Extensions</span>
+              <div class="panel-heading-actions">
+                <span class="installed-pill" id="extensions-count">Installed</span>
+              </div>
+            </div>
+            <div class="extensions-content">
+              <div class="extensions-search">
+                <i class="codicon codicon-search"></i>
+                <input id="extensions-filter" placeholder="Filter built-in extensions" spellcheck="false" />
+              </div>
+              <div class="extensions-section-title">Language Support</div>
+              <div class="language-grid" id="language-grid"></div>
+              <div class="extensions-section-title">Color Themes</div>
+              <div class="theme-grid" id="theme-grid"></div>
+            </div>
+          </section>
+        </aside>
+
+        <div class="resizer resizer-vertical" id="sidebar-resizer" title="Resize sidebar"></div>
+
+        <main class="main-area">
+          <div class="editor-group">
+            <div class="tabs" id="tabs">
+              <div class="tabs-list" id="tabs-list"></div>
+              <div class="tabs-actions">
+                <button id="tab-more" title="More editor actions"><i class="codicon codicon-ellipsis"></i></button>
+              </div>
+            </div>
+            <div class="breadcrumbs" id="breadcrumbs"></div>
+            <div class="editor-area" id="editor-area">
+              <div class="welcome" id="welcome">
+                <div class="welcome-glow"></div>
+                <div class="welcome-inner">
+                  <img src="./assets/logo.svg" alt="KaliCode" class="welcome-logo" />
+                  <div class="welcome-eyebrow"><span class="dot"></span> Built for Kali Linux</div>
+                  <h1>KaliCode</h1>
+                  <p class="welcome-tagline">A sharp, fast workspace for code, shell, and source control.</p>
+
+                  <div class="welcome-actions">
+                    <button class="btn btn-primary btn-lg" id="welcome-open-folder">
+                      <i class="codicon codicon-folder-opened"></i> Open Folder
+                    </button>
+                    <button class="btn btn-lg" id="welcome-new-file">
+                      <i class="codicon codicon-new-file"></i> New File
+                    </button>
+                  </div>
+
+                  <div class="welcome-columns">
+                    <div class="welcome-column">
+                      <div class="welcome-column-title">Recent Folders</div>
+                      <div class="recent-list" id="recent-folders">
+                        <span class="muted small">No recent folders yet.</span>
+                      </div>
+                    </div>
+                    <div class="welcome-column">
+                      <div class="welcome-column-title">Recently Opened</div>
+                      <div class="recent-list" id="recent-files">
+                        <span class="muted small">No recent files yet.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="welcome-shortcuts" id="welcome-shortcuts">
+                    <div class="shortcut-card"><kbd>Ctrl</kbd><kbd>P</kbd><span>Quick Open</span></div>
+                    <div class="shortcut-card"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>P</kbd><span>Command Palette</span></div>
+                    <div class="shortcut-card"><kbd>Ctrl</kbd><kbd>`</kbd><span>Terminal</span></div>
+                    <div class="shortcut-card"><kbd>F5</kbd><span>Run File</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="editor-host" id="editor-host" hidden></div>
+              <div class="drop-overlay" id="drop-overlay">
+                <i class="codicon codicon-cloud-upload"></i>
+                <strong>Drop a folder or file to open</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="resizer resizer-horizontal" id="panel-resizer" hidden></div>
+
+          <section class="bottom-panel" id="bottom-panel" hidden>
+            <div class="panel-tabs">
+              <div class="panel-tab-buttons">
+                <button data-panel-view="problems" id="panel-tab-problems">
+                  Problems <span class="count-pill" id="problems-count">0</span>
+                </button>
+                <button data-panel-view="terminal" class="active" id="panel-tab-terminal">
+                  Terminal
+                </button>
+                <button data-panel-view="output" id="panel-tab-output">Output</button>
+              </div>
+              <div class="panel-tab-actions">
+                <div class="terminal-tools" id="terminal-tools">
+                  <button id="term-new" title="New Terminal"><i class="codicon codicon-add"></i></button>
+                  <button id="term-clear" title="Clear Terminal"><i class="codicon codicon-clear-all"></i></button>
+                  <button id="term-kill" title="Kill Terminal"><i class="codicon codicon-trash"></i></button>
+                </div>
+                <button id="panel-maximize" title="Maximize Panel"><i class="codicon codicon-chevron-up"></i></button>
+                <button id="panel-close" title="Close Panel"><i class="codicon codicon-close"></i></button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="panel-view" id="terminal-view" data-view="terminal">
+                <div id="terminal" class="terminal-host"></div>
+                <div class="terminal-placeholder" id="terminal-placeholder">
+                  <i class="codicon codicon-terminal"></i>
+                  <span>Starting shell…</span>
+                </div>
+              </div>
+              <div class="panel-view" id="problems-view" data-view="problems" hidden>
+                <div class="problems-list" id="problems-list"></div>
+              </div>
+              <div class="panel-view" id="output-view" data-view="output" hidden>
+                <pre class="output-log" id="output"></pre>
+              </div>
+            </div>
+          </section>
+
+          <footer class="statusbar">
+            <div class="status-left">
+              <button class="status-item" id="status-branch" title="Source Control">
+                <i class="codicon codicon-git-branch"></i><span id="status-branch-name">no repository</span>
+              </button>
+              <span class="status-item status-sync" id="status-sync" hidden>
+                <i class="codicon codicon-sync"></i><span id="status-sync-label"></span>
+              </span>
+              <button class="status-item" id="status-problems" title="Problems">
+                <i class="codicon codicon-error"></i><span id="status-errors">0</span>
+                <i class="codicon codicon-warning"></i><span id="status-warnings">0</span>
+              </button>
+              <span class="status-item soft" id="status-workspace"><i class="codicon codicon-folder"></i><span id="status-folder">no folder</span></span>
+            </div>
+            <div class="status-right">
+              <button class="status-item" id="status-position" title="Go to Line">Ln 1, Col 1</button>
+              <button class="status-item" id="status-indent" title="Indentation">Spaces: 4</button>
+              <button class="status-item" id="status-encoding" title="Encoding">UTF-8</button>
+              <button class="status-item" id="status-eol" title="End of Line">LF</button>
+              <button class="status-item" id="status-language" title="Change Language Mode">Plain Text</button>
+              <button class="status-item" id="status-theme" title="Color Theme">
+                <i class="codicon codicon-color-mode"></i><span id="status-theme-name">Kali</span>
+              </button>
+            </div>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+    <div id="overlay-root"></div>
+    <div id="menu-root"></div>
+    <div id="toast-container" aria-live="polite"></div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
