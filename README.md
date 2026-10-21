@@ -5,6 +5,8 @@ terminal, Git, project-wide search, and run tools in a compact VS Code-style
 shell.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/SaiKishore6336/kalicode)](../../releases/latest)
+[![CI](https://github.com/SaiKishore6336/kalicode/actions/workflows/ci.yml/badge.svg)](https://github.com/SaiKishore6336/kalicode/actions/workflows/ci.yml)
 ![Platform: Linux](https://img.shields.io/badge/platform-Linux-2ea44f)
 ![Electron 44](https://img.shields.io/badge/Electron-44-47848F?logo=electron&logoColor=white)
 ![Monaco 0.57](https://img.shields.io/badge/Monaco-0.57-007ACC?logo=visualstudiocode&logoColor=white)
